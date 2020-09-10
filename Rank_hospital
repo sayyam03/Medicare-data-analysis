@@ -1,0 +1,102 @@
+## AIM is to create a function that takes a condition (Heart attack, Heart failure and pneumonia),
+##a State and a rank to give the hospital with that rank in the chosen state.
+library(dplyr)
+
+
+##The function is initiated using rankhospital
+rankhospital<- function(state = as.character(),op=as.character(),num = as.numeric()){
+ ## Downloading the file as required...
+
+   filename <- "rprog_data_ProgAssignment3-data.zip"
+
+  if (!file.exists(filename)){
+    c<- readline("You don't have the required dataset, to download press Y: ")
+    if(c == "Y"){
+      fileURL <- "https://d396qusza40orc.cloudfront.net/rprog%2Fdata%2FProgAssignment3-data.zip"
+      download.file(fileURL, filename, method="curl")
+    }
+    if(c != "Y"){
+      stop("File not Downloaded!")
+    }
+  }
+
+  if (!file.exists("outcome-of-care-measures.csv")) {
+    unzip(filename)
+  }
+
+   ##Reading the file
+   outcome<- read.csv("outcome-of-care-measures.csv")
+
+   ##Choosing the state
+   state<- readline("Please enter state required (abbreviations only): ")
+
+   ##Choosing the outcome
+   op<- readline("Please enter outcome (ha for heart attack, hf for heart failure and p for pneumonia): ")
+   if(op== "ha"){
+     op<- "heart attack"
+   }
+   if(op== "hf"){
+     op<- "heart failure"
+   }
+   if(op== "p"){
+     op<- "pneumonia"
+   }
+
+   ## Choosing the rank
+
+   num<- readline("Please specify the rank desired (best, worst or a number): ")
+
+   if(num=="best"){
+     num<- 1
+   }
+   if(num=="worst"){
+     s<- outcome %>% count(State)
+     num<- s$n[s$State==state]
+   }
+  ## Actual choosing of hospital
+   ##Checking if state is valid or not
+  chosen_state<- state
+  if (is.element(chosen_state,unique(outcome[["State"]])) == FALSE ){
+    stop("invalid state")
+
+  }
+  ##Checking if outcome is valid or not
+  if (is.element(op,c("heart attack", "heart failure", "pneumonia")) == FALSE){
+    stop("invalid outcome")
+
+  }
+
+  ## Making analysis easier by subsetting according to chosen state
+  required_data<- subset(outcome,outcome$State==chosen_state)
+
+  ## Making first letter caps as given in data for proper variable selection
+  p<- strsplit(op," ")[[1]]
+
+  o<- paste(toupper(substring(p,1,1)), substring(p,2), sep = "", collapse= ".")
+
+
+  desired_outcome<- paste0("Hospital.30.Day.Death..Mortality..Rates.from.",o)
+
+  ## Selecting data according to hospital
+  req_hospital<- select(required_data,Hospital.Name,desired_outcome)
+  r<- req_hospital[order(req_hospital$Hospital.Name,na.last = NA), ]
+
+  ##Arranging data by selected outcome
+  suppressWarnings(if(op=="heart failure"){
+    r$Rank<- rank(as.numeric(r$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure),na.last = TRUE, ties.method = "first")
+  })
+  suppressWarnings(if(op=="heart attack"){
+    r$Rank<-rank(as.numeric(r$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack),na.last = TRUE, ties.method = "first")
+  })
+  suppressWarnings(if(op=="pneumonia"){
+    r$Rank<-rank(as.numeric(r$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia),na.last = TRUE, ties.method = "first")
+
+  })
+
+  ##Ranking hospital
+  result_data<- r[order(r$Rank,na.last = NA), ]
+  ##Indexing for the required hospital according to rank
+  Hospital<- result_data$Hospital.Name[result_data$Rank == num]
+  Hospital
+}
+rankhospital()
