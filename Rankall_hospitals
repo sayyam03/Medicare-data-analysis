@@ -1,0 +1,127 @@
+## AIM is to create a function that takes a condition (Heart attack, Heart failure or pneumonia),
+##a rank to give the hospitals with that rank in all the states in USA.
+library(dplyr)
+
+
+##The function is initiated using rankall
+
+rankall <- function(op= as.character(), num=as.numeric()){
+
+## Downloading the file as required...
+
+filename <- "rprog_data_ProgAssignment3-data.zip"
+
+if (!file.exists(filename)){
+  c<- readline("You don't have the required dataset, to download press Y: ")
+  if(c == "Y"){
+    fileURL <- "https://d396qusza40orc.cloudfront.net/rprog%2Fdata%2FProgAssignment3-data.zip"
+    download.file(fileURL, filename, method="curl")
+  }
+  if(c != "Y"){
+    stop("File not Downloaded!")
+  }
+}
+
+if (!file.exists("outcome-of-care-measures.csv")) {
+  unzip(filename)
+}
+
+##Reading the file
+outcome<- read.csv("outcome-of-care-measures.csv")
+
+##Choosing the outcome
+op<- menu(c("Heart Attack", "Heart Failure", "Pneumonia"),
+          title = "Please choose one of the following outcomes:")
+if(op== 1){
+  op<- "heart attack"
+}
+if(op== 2){
+  op<- "heart failure"
+}
+if(op== 3){
+  op<- "pneumonia"
+}
+
+## Choosing the rank
+
+num<- readline("Please specify the rank desired (best, worst or a number): ")
+
+if(num=="best"){
+  num<- 1
+}
+if(num=="worst"){
+  s<- outcome %>% count(State)
+}
+
+##Checking if the outcome selected is right or wrong
+  if (is.element(op,c("heart attack", "heart failure", "pneumonia")) == FALSE){
+    stop("invalid outcome")
+
+  }
+
+  ## Getting input to variable name
+  p<- strsplit(op," ")[[1]]
+
+  o<- paste(toupper(substring(p,1,1)), substring(p,2), sep = "", collapse= ".")
+
+
+  desired_outcome<- paste0("Hospital.30.Day.Death..Mortality..Rates.from.",o)
+  outcome<- select(outcome,Hospital.Name, State, desired_outcome
+                   )
+  ## Now the program chooses according the mortality selected
+
+  suppressWarnings(if(op=="heart failure"){
+    ##First of all, it changes variable from character to numeric for correct ranking
+    outcome$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure<- as.numeric(
+      outcome$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,na.last = TRUE, ties.method = "first")
+    ##Using dplyr
+    by_State<- outcome %>%
+      arrange(State,Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure) %>%
+      ##Arranging by state to rank in each state separately
+      group_by(State) %>%
+      ##creating the rank variable for choosing the result later
+      mutate(Rank = rank(Hospital.30.Day.Death..Mortality..Rates.from.Heart.Failure,
+                         ties.method = "first"))
+    ##Filtering according to rank
+    if(num == "worst"){
+     by_State<- aggregate(by_State$Hospital.Name, by = list(by_State$State), FUN = tail, n= 1)
+    }
+    else{
+      by_State %>% filter(Rank == num)
+    }
+  })
+  suppressWarnings(if(op=="heart attack"){
+    outcome$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack<-as.numeric(
+      outcome$Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,na.last = TRUE, ties.method = "first")
+    by_State<- outcome %>% arrange(State,Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack) %>%
+      group_by(State) %>%
+      mutate(Rank = rank(Hospital.30.Day.Death..Mortality..Rates.from.Heart.Attack,
+                         ties.method = "first"))
+      if(num == "worst"){
+        by_State<- aggregate(by_State$Hospital.Name, by = list(by_State$State), FUN = tail, n= 1)
+      }
+    else{
+      by_State %>% filter(Rank == num)
+    }
+  })
+  suppressWarnings(if(op=="pneumonia"){
+    outcome$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia<- as.numeric(
+    outcome$Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,na.last = TRUE, ties.method = "first")
+    by_State<- outcome %>% arrange(State,Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia) %>%
+      group_by(State) %>%
+      mutate(Rank = rank(Hospital.30.Day.Death..Mortality..Rates.from.Pneumonia,
+                         ties.method = "first"))
+    if(num == "worst"){
+      by_State<- aggregate(by_State$Hospital.Name, by = list(by_State$State), FUN = tail, n= 1)
+    }
+    else{
+      by_State %>% filter(Rank == num)
+    }
+
+  })
+  ## Creating a data frame out of the desired results.
+  desired_data<<- as.data.frame(by_State)
+  print("First 10 results are: ")
+  head(desired_data, n = 10)
+  }
+  ##rankall()
