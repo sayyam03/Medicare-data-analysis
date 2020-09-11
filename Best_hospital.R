@@ -6,7 +6,18 @@ best<- function(state=as.character(),op=as.character()){
 
   filename <- "rprog_data_ProgAssignment3-data.zip"
   state<- readline("Please enter state required (only abbreviations): ")
-  op<- readline("Please enter outcome (only heart attack, heart failure and pneumonia): ")
+  op<- menu(c("Heart Attack", "Heart Failure", "Pneumonia"),
+          title = "Please choose one of the following outcomes: (no. only)")
+if(op== 1){
+  op<- "heart attack"
+}
+if(op== 2){
+  op<- "heart failure"
+}
+if(op== 3){
+  op<- "pneumonia"
+}
+
   ##Downloading file as required
 
   if (!file.exists(filename)){

@@ -31,16 +31,18 @@ rankhospital<- function(state = as.character(),op=as.character(),num = as.numeri
    state<- readline("Please enter state required (abbreviations only): ")
 
    ##Choosing the outcome
-   op<- readline("Please enter outcome (ha for heart attack, hf for heart failure and p for pneumonia): ")
-   if(op== "ha"){
-     op<- "heart attack"
-   }
-   if(op== "hf"){
-     op<- "heart failure"
-   }
-   if(op== "p"){
-     op<- "pneumonia"
-   }
+   op<- menu(c("Heart Attack", "Heart Failure", "Pneumonia"),
+          title = "Please choose one of the following outcomes:")
+if(op== 1){
+  op<- "heart attack"
+}
+if(op== 2){
+  op<- "heart failure"
+}
+if(op== 3){
+  op<- "pneumonia"
+}
+
 
    ## Choosing the rank
 
